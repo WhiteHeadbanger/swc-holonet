@@ -5,7 +5,6 @@
 (load "holonet-sites")
 (load "holonet-state")
 (load "holonet-auth")
-(load "holonet-router")
 (load "holonet-context")
 
 ; =========================================================

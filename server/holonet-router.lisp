@@ -69,6 +69,16 @@
 
       resolved)))
 
+(defun (route-slug slug)
+  (let ((resolved
+          (resolve-page
+            (resolve-route slug))))
+
+    (commit-navigation
+      (route-result-slug resolved))
+
+    resolved))
+
 (defun (route-result-success? result)
   (nth-of result 0))
 
@@ -120,4 +130,5 @@
  resolve-page
  route-result-page
  route
+ route-slug
  )

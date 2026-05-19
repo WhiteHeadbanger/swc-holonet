@@ -72,7 +72,7 @@
 
 (defun (go-to slug)
   (render-route-result
-    (route slug)))
+    (route-slug slug)))
 
 ; =========================================================
 ; INPUT CALLBACKS

@@ -7,6 +7,7 @@
 (load "holonet-router")
 (load "holonet-auth")
 (load "holonet-render")
+(load "holonet-utils")
 
 ; =========================================================
 ; NAVIGATION CALLBACKS
@@ -14,7 +15,7 @@
 
 (defun go-browser-home
   (render-route-result
-    (route "home")))
+    (route home-page)))
 
 (defun logout
   (let ((root (get-site-root current-page)))
@@ -84,12 +85,28 @@
 (defun (login-password-input value)
   (cond
     ; success
-    [(login-password-check value)
-      (render-route-result
-        (route
-          (site-route
-            (get-site-root current-page)
-            "dashboard")))]
+    [(login-password-check value) ;holonet-auth
+
+      (let ((target
+        (concat ; create a new string because otherwise target becomes a new alias for login-target, and as such it will be just a reference instead of a new immutable value.
+          ""
+          (cond
+            [(eq? login-target empty)
+              (site-route
+                (get-site-root current-page)
+                dashboard-page)]
+
+            [#t
+              login-target]))))
+
+        (save-var!
+          login-target
+          empty)
+           
+				;(dbg-pp "TARGET: " target)
+           
+        (render-route-result
+          (resolve-page target)))]
 
     ; failure
     [#t
@@ -97,7 +114,7 @@
         (resolve-page
           (site-route
             (get-site-root current-page)
-            "login")))]))
+            login-page)))]))
 
 ; =========================================================
 ; HOLO CONTEXT
@@ -116,8 +133,8 @@
     logout)) ; 8
 
 (defun (render-route-result result)
-  (render-page
-    (route-result-page result)
+  (render-page ;holonet-render
+    (route-result-page result) ;holonet-router
     holo-ctx))
 
 ; =========================================================
@@ -125,5 +142,5 @@
 ; =========================================================
 
 (defun start
-  (render-route-result
-    (resolve-page current-page)))
+  (render-route-result ;holonet-droid
+    (resolve-page current-page))) ;holonet-router

@@ -20,6 +20,7 @@
         "404"])))
 
 (defun (site-route slug endpoint)
+  ;(dbg-pp "site-route slug: " slug "endpoint: " endpoint)
   (concat
     (get-site-root slug)
     "/"
@@ -81,6 +82,7 @@
   (list success slug page))
 
 (defun (resolve-page slug)
+  ;(dbg-pp "resolve-page slug: " slug)
   (let ((page (get-page-by-url slug)))
     (cond
       ; page missing
@@ -92,8 +94,14 @@
 
       ; protected route
       [(and
-          (page-protected-data? page)
-          (not (site-authenticated? slug)))
+        (page-protected-data? page)
+        (not (site-authenticated? slug)))
+				
+        (save-var!
+          login-target
+          slug)
+       
+
         (resolve-page
           (site-route
             (get-site-root slug)
@@ -107,9 +115,9 @@
           page)])))
 
 (module-export
- get-site-root
  site-route
  resolve-route
- route-resolve-page
+ resolve-page
+ route-result-page
  route
  )

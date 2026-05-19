@@ -66,19 +66,22 @@
   (add-response
     "⬅ Back"
     (ctx-go-back ctx))
+
   (add-response
     "⌂ Home"
     (ctx-go-home ctx))
+
   (add-response
     "Forward ➡"
     (ctx-go-forward ctx))
+
   (cond
-    [(and
-        (site-authenticated? current-page)
-        (page-protected? current-page))
+    [(site-authenticated? current-page)
+
       (add-response
         "Logout"
         (ctx-logout ctx))]
+
     [#t
       empty]))
 

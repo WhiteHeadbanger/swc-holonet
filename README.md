@@ -130,7 +130,7 @@ or directly with:
 
 - Each holosite maintains its own login state.
 - Logging out from a holosite only logs you out from that specific site.
-- Logout is available from the holosite dashboard.
+- Logout is available from any part of an authenticated holosite.
 - After logout, you are redirected to the holosite root page.
 - Attempting to access a protected dashboard without authentication redirects you to the corresponding login page.
 - Sessions are cleared when you stop talking to the droid or NPC.

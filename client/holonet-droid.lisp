@@ -7,6 +7,7 @@
 (load "holonet-router")
 (load "holonet-auth")
 (load "holonet-render")
+(load "holonet-utils")
 
 ; =========================================================
 ; NAVIGATION CALLBACKS
@@ -14,49 +15,64 @@
 
 (defun go-browser-home
   (render-route-result
-    (route-with-history "home")))
+    (route home-page)))
 
 (defun logout
   (let ((root (get-site-root current-page)))
     (save-var!
       authenticated-sites
       (list-remove root authenticated-sites))
+
     (render-route-result
-      (route-raw root))))
+      (resolve-page root))))
 
 (defun go-back
   (cond
     [(eq? back-stack empty)
       (render-route-result
-        (route-raw current-page))]
+        (resolve-page current-page))]
     [#t
       (let ((prev (car back-stack))
             (rest (cdr back-stack)))
+
         (save-var! back-stack rest)
+
         (save-var!
           forward-stack
           (cons current-page forward-stack))
+
+        (save-var!
+          current-page
+          prev)
+
         (render-route-result
-          (route-raw prev)))]))
+          (resolve-page prev)))]))
 
 (defun go-forward
   (cond
     [(eq? forward-stack empty)
       (render-route-result
-        (route-raw current-page))]
+        (resolve-page current-page))]
     [#t
       (let ((next (car forward-stack))
             (rest (cdr forward-stack)))
+
         (save-var! forward-stack rest)
+
         (save-var!
           back-stack
           (cons current-page back-stack))
+
+        (save-var!
+          current-page
+          next)
+
         (render-route-result
-          (route-raw next)))]))
+          (resolve-page next)))]))
 
 (defun (go-to slug)
   (render-route-result
-    (route-with-history slug)))
+    (route-slug slug)))
 
 ; =========================================================
 ; INPUT CALLBACKS
@@ -69,19 +85,36 @@
 (defun (login-password-input value)
   (cond
     ; success
-    [(login-password-check value)
-      (render-route-result
-        (route-raw
-          (site-route
-            current-page
-            "dashboard")))]
+    [(login-password-check value) ;holonet-auth
+
+      (let ((target
+        (concat ; create a new string because otherwise target becomes a new alias for login-target, and as such it will be just a reference instead of a new immutable value.
+          ""
+          (cond
+            [(eq? login-target empty)
+              (site-route
+                (get-site-root current-page)
+                dashboard-page)]
+
+            [#t
+              login-target]))))
+
+        (save-var!
+          login-target
+          empty)
+           
+				;(dbg-pp "TARGET: " target)
+           
+        (render-route-result
+          (resolve-page target)))]
+
     ; failure
     [#t
       (render-route-result
-        (route-raw
+        (resolve-page
           (site-route
-            current-page
-            "login")))]))
+            (get-site-root current-page)
+            login-page)))]))
 
 ; =========================================================
 ; HOLO CONTEXT
@@ -100,16 +133,14 @@
     logout)) ; 8
 
 (defun (render-route-result result)
-  (cond
-    [(eq? result "404")
-      (render-404 holo-ctx)]
-    [#t
-      (render-page result holo-ctx)]))
+  (render-page ;holonet-render
+    (route-result-page result) ;holonet-router
+    holo-ctx))
 
 ; =========================================================
 ; ENTRY POINT
 ; =========================================================
 
 (defun start
-  (render-route-result
-    (route-raw current-page)))
+  (render-route-result ;holonet-droid
+    (resolve-page current-page))) ;holonet-router

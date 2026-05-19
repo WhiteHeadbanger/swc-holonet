@@ -20,6 +20,7 @@
         "404"])))
 
 (defun (site-route slug endpoint)
+  ;(dbg-pp "site-route slug: " slug "endpoint: " endpoint)
   (concat
     (get-site-root slug)
     "/"
@@ -37,48 +38,97 @@
     [#t
       (concat current-page "/" slug)]))
 
-(defun (route-raw slug)
-  (let ((page (get-page-by-url slug)))
-    (cond
-      ; page missing
-      [(eq? page empty)
-        "404"]
-      ; protected route
-      [(and
-          (page-protected-data? page)
-          (not (site-authenticated? slug)))
-        (route-raw
-          (site-route slug "login"))]
-      ; success
-      [#t
-        (save-var! current-page slug)
-        page])))
-
-(defun (route-with-history slug)
+(defun (commit-navigation resolved-slug)
   (cond
-    [(eq? slug current-page)
-      (route-raw slug)]
+    ; same page
+    [(eq? resolved-slug current-page)
+      empty]
+
+    ; normal navigation
     [#t
       (save-var!
         back-stack
         (cons current-page back-stack))
+
       (save-var!
         forward-stack
         '())
-      (route-raw slug)]))
+
+      (save-var!
+        current-page
+        resolved-slug)]))
 
 (defun (route url)
   (let ((clean (sanitize-url url)))
-    (route-with-history
-      (resolve-route clean))))
+    (let ((resolved
+            (resolve-page
+              (resolve-route clean))))
 
+      (commit-navigation
+        (route-result-slug resolved))
+
+      resolved)))
+
+(defun (route-slug slug)
+  (let ((resolved
+          (resolve-page
+            (resolve-route slug))))
+
+    (commit-navigation
+      (route-result-slug resolved))
+
+    resolved))
+
+(defun (route-result-success? result)
+  (nth-of result 0))
+
+(defun (route-result-slug result)
+  (nth-of result 1))
+
+(defun (route-result-page result)
+  (nth-of result 2))
+
+(defun (make-route-result success slug page)
+  (list success slug page))
+
+(defun (resolve-page slug)
+  ;(dbg-pp "resolve-page slug: " slug)
+  (let ((page (get-page-by-url slug)))
+    (cond
+      ; page missing
+      [(eq? page empty)
+        (make-route-result
+          #f
+          "404"
+          (get-page-by-url "404"))]
+
+      ; protected route
+      [(and
+        (page-protected-data? page)
+        (not (site-authenticated? slug)))
+				
+        (save-var!
+          login-target
+          slug)
+       
+
+        (resolve-page
+          (site-route
+            (get-site-root slug)
+            "login"))]
+
+      ; success
+      [#t
+        (make-route-result
+          #t
+          slug
+          page)])))
 
 (module-export
- sanitize-url
- get-site-root
  site-route
  resolve-route
- route-raw
- route-with-history
+ resolve-page
+ route-result-page
  route
+ route-slug
  )
